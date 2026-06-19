@@ -217,7 +217,7 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    const CURRENT_VERSION = "1.1";
+    const CURRENT_VERSION = "1.2"; // Обновили версию структуры данных
 
     let state = {
       version: CURRENT_VERSION,
@@ -234,12 +234,12 @@
     const themes = ['dark', 'light', 'ebon'];
 
     const ui = {
-      ru: { hp: "❤️ Здоровье", energy: "🔥 Факелы", gold: "💰 Золото", donate: "⭐ Купить 5 Факелов (за Звёзды)", theme: "Сменить тему", noEnergy: "У вас закончились факелы!", emptyInv: "🎒 Заплечный мешок пуст", invTitle: "🎒 Инвентарь: ", gameOver: "💀 Вы погибли в глубинах склепа... Авантюра окончена.", restartBtn: "🔄 Начать заново", enemyName: "💀 Скелет-Страж", keyItem: "🔑 Ключ от Сокровищницы", pouchItem: "🪙 Кошель", successBuy: "Успешная покупка! +5 факелов." },
-      en: { hp: "❤️ Health", energy: "🔥 Torches", gold: "💰 Gold", donate: "⭐ Buy 5 Torches (via Stars)", theme: "Change Theme", noEnergy: "Out of torches!", emptyInv: "🎒 Backpack is empty", invTitle: "🎒 Inventory: ", gameOver: "💀 You perished in the depths of the crypt...", restartBtn: "🔄 Restart", enemyName: "💀 Skeleton Guard", keyItem: "🔑 Treasury Key", pouchItem: "🪙 Old Pouch", successBuy: "Purchase successful! +5 torches." },
-      es: { hp: "❤️ Salud", energy: "🔥 Antorchas", gold: "💰 Oro", donate: "⭐ Comprar 5 Antorchas", theme: "Cambiar Tema", noEnergy: "¡Sin antorchas!", emptyInv: "🎒 Mochila vacía", invTitle: "🎒 Inventario: ", gameOver: "💀 Has perecido en las profundidades...", restartBtn: "🔄 Reiniciar", enemyName: "💀 Esqueleto Guardián", keyItem: "🔑 Clave del Tesoro", pouchItem: "🪙 Bolsa Vieja", successBuy: "¡Compra con éxito! +5 antorchas." },
-      de: { hp: "❤️ Gesundheit", energy: "🔥 Fackeln", gold: "💰 Gold", donate: "⭐ 5 Fackeln kaufen", theme: "Thema ändern", noEnergy: "Keine Fackeln mehr!", emptyInv: "🎒 Rucksack ist leer", invTitle: "🎒 Inventar: ", gameOver: "💀 Du bist in den Tiefen der Krypta gestorben...", restartBtn: "🔄 Neu starten", enemyName: "💀 Skelettwächter", keyItem: "🔑 Tresorschlüssel", pouchItem: "🪙 Alter Beutel", successBuy: "Kauf erfolgreich! +5 Fackeln." },
-      fr: { hp: "❤️ Santé", energy: "🔥 Torches", gold: "💰 Or", donate: "⭐ Acheter 5 Torches", theme: "Changer de Thème", noEnergy: "Plus de torches !", emptyInv: "🎒 Le sac à dos est vide", invTitle: "🎒 Inventaire: ", gameOver: "💀 Vous avez péri dans les profondeurs...", restartBtn: "🔄 Recommencer", enemyName: "💀 Squelette Garde", keyItem: "🔑 Clé du Trésor", pouchItem: "🪙 Vieille Bourse", successBuy: "Achat réussi ! +5 torches." },
-      ga: { hp: "❤️ Sláinte", energy: "🔥 Lóicéid", gold: "💰 Ór", donate: "⭐ Ceannaigh 5 Lóicéid", theme: "Athraigh Téama", noEnergy: "Gan lóicéid!", emptyInv: "🎒 Tá an mála folamh", invTitle: "🎒 Fardal: ", gameOver: "💀 Fuair tú bás i ndorchadas na huaimhe...", restartBtn: "🔄 Atosaigh", enemyName: "💀 Sclábhaí Cnámharlaigh", keyItem: "🔑 Eochair Taisce", pouchItem: "🪙 Sean-Spaga", successBuy: "Ceannach rathúil! +5 lóicéid." }
+      ru: { hp: "❤️ Здоровье", energy: "🔥 Факелы", gold: "💰 Золото", donate: "⭐ Купить 5 Факелов (за Звёзды)", theme: "Сменить тему", noEnergy: "У вас закончились факелы!", emptyInv: "🎒 Заплечный мешок пуст", invTitle: "🎒 Инвентарь: ", gameOver: "💀 Вы погибли в глубинах склепа... Авантюра окончена.", restartBtn: "🔄 Начать заново", enemyName: "💀 Скелет-Страж", keyItem: "🔑 Ключ от Сокровищницы", pouchItem: "🪙 Кошель", potionItem: "🧪 Зелье здоровья", successBuy: "Успешная покупка! +5 факелов." },
+      en: { hp: "❤️ Health", energy: "🔥 Torches", gold: "💰 Gold", donate: "⭐ Buy 5 Torches (via Stars)", theme: "Change Theme", noEnergy: "Out of torches!", emptyInv: "🎒 Backpack is empty", invTitle: "🎒 Inventory: ", gameOver: "💀 You perished in the depths of the crypt...", restartBtn: "🔄 Restart", enemyName: "💀 Skeleton Guard", keyItem: "🔑 Treasury Key", pouchItem: "🪙 Old Pouch", potionItem: "🧪 Health Potion", successBuy: "Purchase successful! +5 torches." },
+      es: { hp: "❤️ Salud", energy: "🔥 Antorchas", gold: "💰 Oro", donate: "⭐ Comprar 5 Antorchas", theme: "Cambiar Tema", noEnergy: "¡Sin antorchas!", emptyInv: "🎒 Mochila vacía", invTitle: "🎒 Inventario: ", gameOver: "💀 Has perecido en las profundidades...", restartBtn: "🔄 Reiniciar", enemyName: "💀 Esqueleto Guardián", keyItem: "🔑 Clave del Tesoro", pouchItem: "🪙 Bolsa Vieja", potionItem: "🧪 Poción de Salud", successBuy: "¡Compra con éxito! +5 antorchas." },
+      de: { hp: "❤️ Gesundheit", energy: "🔥 Fackeln", gold: "💰 Gold", donate: "⭐ 5 Fackeln kaufen", theme: "Thema ändern", noEnergy: "Keine Fackeln mehr!", emptyInv: "🎒 Rucksack ist leer", invTitle: "🎒 Inventar: ", gameOver: "💀 Du bist in den Tiefen der Krypta gestorben...", restartBtn: "🔄 Neu starten", enemyName: "💀 Skelettwächter", keyItem: "🔑 Tresorschlüssel", pouchItem: "🪙 Alter Beutel", potionItem: "🧪 Heiltrank", successBuy: "Kauf erfolgreich! +5 Fackeln." },
+      fr: { hp: "❤️ Santé", energy: "🔥 Torches", gold: "💰 Or", donate: "⭐ Acheter 5 Torches", theme: "Changer de Thème", noEnergy: "Plus de torches !", emptyInv: "🎒 Le sac à dos est vide", invTitle: "🎒 Inventaire: ", gameOver: "💀 Vous avez péri dans les profondeurs...", restartBtn: "🔄 Recommencer", enemyName: "💀 Squelette Garde", keyItem: "🔑 Clé du Trésor", pouchItem: "🪙 Vieille Bourse", potionItem: "🧪 Potion de Santé", successBuy: "Achat réussi ! +5 torches." },
+      ga: { hp: "❤️ Sláinte", energy: "🔥 Lóicéid", gold: "💰 Ór", donate: "⭐ Ceannaigh 5 Lóicéid", theme: "Athraigh Téama", noEnergy: "Gan lóicéid!", emptyInv: "🎒 Tá an mála folamh", invTitle: "🎒 Fardal: ", gameOver: "💀 Fuair tú bás i ndorchadas na huaimhe...", restartBtn: "🔄 Atosaigh", enemyName: "💀 Sclábhaí Cnámharlaigh", keyItem: "🔑 Eochair Taisce", pouchItem: "🪙 Sean-Spaga", potionItem: "🧪 Potion Sláinte", successBuy: "Ceannach rathúil! +5 lóicéid." }
     };
 
     const storyData = {
@@ -321,22 +321,34 @@
     }
 
     function getBattleChoices(lng) {
-      return [
+      const choices = [
         { text: { ru: "⚔️ Нанести мощный удар", en: "⚔️ Strike with weapon", es: "⚔️ Atacar con fuerza", de: "⚔️ Angreifen", fr: "⚔️ Frapper", ga: "⚔️ Buail leis an arm" }[lng], next: "battle_turn" },
         { text: { ru: "🛡️ Закрыться щитом", en: "🛡️ Defend yourself", es: "🛡️ Defenderse", de: "🛡️ Blocken", fr: "🛡️ Se défendre", ga: "🛡️ Cosain tú féin" }[lng], next: "battle_block" }
       ];
+
+      // Динамическая кнопка зелья: активна только при наличии предмета в инвентаре
+      if (state.player.inventory.includes("potionItem")) {
+        choices.push({
+          text: { ru: "🧪 Выпить зелье (+30 HP)", en: "🧪 Drink potion (+30 HP)", es: "🧪 Beber poción (+30 HP)", de: "🧪 Trank trinken (+30 HP)", fr: "🧪 Boire la potion (+30 HP)", ga: "🧪 Ól potion (+30 HP)" }[lng],
+          next: "use_potion"
+        });
+      }
+
+      return choices;
     }
 
     function getChestText(lng) {
       if (state.chestOpened) {
-        return { ru: "Используя ключ, вы открыли потайной замок! Внутри лежало массивное сокровище (+200 💰)!", en: "Using the key, you unlocked the chest! Huge treasure found (+200 💰)!", es: "¡Usando la clave, abriste el cofre! Gran tesoro encontrado (+200 💰)!", de: "Mit dem Schlüssel hast du die Truhe geöffnet! Riesiger Schatz gefunden (+200 💰)!", fr: "En utilisant la clé, vous avez ouvert le coffre ! Immense trésor trouvé (+200 💰)!", ga: "Ag baint úsáide as an eochair, d'oscail tú an ciste! Taisce ollmhór aimsithe (+200 💰)!" }[lng];
+        return { ru: "Используя ключ, вы открыли потайной замок! Внутри лежало массивное сокровище (+200 💰)!", en: "Using the key, you unlocked the chest! Huge treasure found (+200 💰)!", es: "¡Usando la clave, abriste el cofre! Gran tesoro encontrado (+200 💰)!", de: "Mit dem Schlüssel hast du die Truhe geöffnet! Riesiger Schatz gefunden (+200 💰)!", fr: "En utilisant la clé, vous avez ouvert the coffre ! Immense trésor trouvé (+200 💰)!", ga: "Ag baint úsáide as an eochair, d'oscail tú an ciste! Taisce ollmhór aimsithe (+200 💰)!" }[lng];
       }
-      return { ru: "Ключа не было, пришлось сбивать замок камнем. Вы достали немного золота (+50 💰).", en: "No key found. You smashed the lock and got some gold (+50 💰).", es: "No se encontró clave. Rompiste el cerроjo y obtuviste algo de oro (+50 💰).", de: "Kein Schlüssel. Du hast das Schloss eingeschlagen (+50 💰).", fr: "Aucune clé. Vous avez brisé le cadenas (+50 💰).", ga: "Níor aimsíodh aon eochair. Bhris tú an glas (+50 💰)." }[lng];
+      return { ru: "Ключа не было, пришлось сбивать замок камнем. Вы достали немного золота (+50 💰).", en: "No key found. You smashed the lock and got some gold (+50 💰).", es: "No se encontró clave. Rompiste el cerrojo y obtuviste algo de oro (+50 💰).", de: "Kein Schlüssel. Du hast das Schloss eingeschlagen (+50 💰).", fr: "Aucune clé. Vous avez brisé le cadenas (+50 💰).", ga: "Níor aimsíodh aon eochair. Bhris tú an glas (+50 💰)." }[lng];
     }
 
     let saveTimeout = null;
     function updateUI() {
       const lng = state.currentLang;
+      
+      // ИСПРАВЛЕНИЕ ЛОКАЛИЗАЦИИ ИНТЕРФЕЙСА (теперь переводится ВСЁ)
       document.getElementById('label-hp').innerText = ui[lng].hp;
       document.getElementById('label-energy').innerText = ui[lng].energy;
       document.getElementById('label-gold').innerText = ui[lng].gold;
@@ -438,16 +450,21 @@
         state.battleLog = '';
       }
 
+      // ОБНОВЛЕННЫЙ ЛУТ В ЛАГЕРЕ (Шансы на Зелье)
       if (nextScene === 'roll_camp' && state.campRollResult === null) {
         const roll = Math.random();
         state.campRollResult = roll;
-        if (roll < 0.4) {
+        if (roll < 0.3) {
           state.player.gold += 30;
           state.player.inventory.push("pouchItem");
           state.battleLog = { ru: "Удача! Под старым настилом вы откопали старый кошель с золотом (+30 💰).", en: "Luck! Under the old floorboards you dug up an old pouch of gold (+30 💰).", es: "¡Suerte! Cavaste una vieja bolsa de oro (+30 💰).", de: "Glück! Du hast einen alten Beutel Gold ausgegraben (+30 💰).", fr: "Chance ! Vous avez déterré une vieille bourse d'or (+30 💰).", ga: "Rath! Thochail tú seanspaga óir (+30 💰)." }[lng];
-        } else if (roll < 0.7) {
+        } else if (roll < 0.55) {
           state.player.hp = Math.max(0, state.player.hp - 20);
           state.battleLog = { ru: "Ловушка! Вы наступили на ржавый капкан (-20 HP).", en: "Trap! You stepped on a rusty bear trap (-20 HP).", es: "¡Trampa! Pisaste una trampa oxidada (-20 HP).", de: "Falle! Du bist in eine rostige Bärenfalle getreten (-20 HP).", fr: "Piège ! Vous avez marché sur un piège rouillé (-20 HP).", ga: "Gaiste! Shéid tú ar ghaiste meirgeach (-20 HP)." }[lng];
+        } else if (roll < 0.8) {
+          // ДОБАВЛЕНИЕ ЗЕЛЬЯ В ИНВЕНТАРЬ
+          state.player.inventory.push("potionItem");
+          state.battleLog = { ru: "В разбитом походном ящике вы нашли спасительное Зелье здоровья!", en: "In a broken supply crate you found a saving Health Potion!", es: "¡En una caja de suministros rota encontraste una Poción de Salud!", de: "In Kiste hast du einen rettenden Heiltrank gefunden!", fr: "Dans une caisse cassée, vous avez trouvé une Potion de Santé !", ga: "Aimsigh tú Potion Sláinte i mbosca briste!" }[lng];
         } else {
           state.player.inventory.push("keyItem");
           state.battleLog = { ru: "Вы нашли древний Ключ от Сокровищницы, покрытый светящимися рунами!", en: "You found an ancient Treasury Key covered in glowing runes!", es: "¡Encontraste una antigua clave del tesoro cubierta de runas!", de: "Du hast einen alten Tresorschlüssel gefunden, der mit Runen bedeckt ist!", fr: "Vous avez trouvé une clé du trésor antique couverte de runes !", ga: "Aimsigh tú eochair thaisce ársa clúdaithe le rúnanna!" }[lng];
@@ -456,8 +473,8 @@
       }
 
       if (nextScene === 'battle_turn') {
-        const dmgToEnemy = Math.floor(Math.random() * 11) + 18; // 18-28 урона (ср. ~23)
-        const dmgToPlayer = Math.floor(Math.random() * 7) + 6;   // 6-12 урона (ср. ~9)
+        const dmgToEnemy = Math.floor(Math.random() * 11) + 18; 
+        const dmgToPlayer = Math.floor(Math.random() * 7) + 6;   
         state.enemy.hp = Math.max(0, state.enemy.hp - dmgToEnemy);
         state.player.hp = Math.max(0, state.player.hp - dmgToPlayer);
 
@@ -478,8 +495,8 @@
       }
 
       if (nextScene === 'battle_block') {
-        const dmgToEnemy = Math.floor(Math.random() * 4) + 2;  // 2-5 урона (ср. ~3.5)
-        const dmgToPlayer = Math.floor(Math.random() * 3);     // 0-2 урона (ср. ~1)
+        const dmgToEnemy = Math.floor(Math.random() * 4) + 2;  
+        const dmgToPlayer = Math.floor(Math.random() * 3);     
         state.enemy.hp = Math.max(0, state.enemy.hp - dmgToEnemy);
         state.player.hp = Math.max(0, state.player.hp - dmgToPlayer);
 
@@ -497,6 +514,25 @@
           }[lng];
           nextScene = 'crypt_inside';
         }
+      }
+
+      // ЛОГИКА ИСПОЛЬЗОВАНИЯ ЗЕЛЬЯ В БОЮ
+      if (nextScene === 'use_potion') {
+        const idx = state.player.inventory.indexOf("potionItem");
+        if (idx !== -1) {
+          state.player.inventory.splice(idx, 1); // Удаляем одно зелье
+          state.player.hp = Math.min(100, state.player.hp + 30); // Лечим на 30 HP, но не выше 100
+          
+          state.battleLog = {
+            ru: "🧪 Вы выпили зелье здоровья и восстановили +30 HP! Скелет-Страж замешкался и не успел атаковать.",
+            en: "🧪 You drank a health potion and restored +30 HP! The Skeleton Guard hesitated and missed his turn.",
+            es: "🧪 ¡Bebiste una poción y recuperaste +30 HP! El Esqueleto Guardián dudó.",
+            de: "🧪 Du hast einen Heiltrank getrunken (+30 HP)! Das Skelett zögerte.",
+            fr: "🧪 Vous avez bu une potion (+30 HP) ! Le Squelette a hésité.",
+            ga: "🧪 D'ól tú potion sláinte (+30 HP)! Bhí an cnámharlach ag fanacht."
+          }[lng];
+        }
+        nextScene = 'crypt_inside';
       }
 
       if (nextScene === 'open_chest') {
