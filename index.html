@@ -12,6 +12,25 @@
       --text-color: #e2e2e9;
       --accent-color: #7b2cbf;
       --accent-hover: #9d4edd;
+      --border-color: #2d2d3d;
+    }
+
+    :root[data-theme="light"] {
+      --bg-color: #f4f4f9;
+      --card-bg: #ffffff;
+      --text-color: #1c1c24;
+      --accent-color: #0077b6;
+      --accent-hover: #00b4d8;
+      --border-color: #dcdce6;
+    }
+
+    :root[data-theme="ebon"] {
+      --bg-color: #050507;
+      --card-bg: #0d0d11;
+      --text-color: #a3a3b2;
+      --accent-color: #3a0ca3;
+      --accent-hover: #7209b7;
+      --border-color: #1a1a26;
     }
 
     body {
@@ -24,9 +43,26 @@
       flex-direction: column;
       height: 100vh;
       box-sizing: border-box;
+      transition: all 0.3s ease;
     }
 
-    /* Верхняя панель со статусом */
+    .settings-panel {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+
+    .settings-panel select, .settings-panel button {
+      background: var(--card-bg);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
     .status-bar {
       display: flex;
       justify-content: space-between;
@@ -34,7 +70,7 @@
       padding: 12px;
       border-radius: 12px;
       font-size: 14px;
-      border: 1px solid #2d2d3d;
+      border: 1px solid var(--border-color);
       margin-bottom: 16px;
     }
 
@@ -49,13 +85,12 @@
       color: var(--accent-hover);
     }
 
-    /* Главный экран квеста */
     .quest-container {
       flex-grow: 1;
       background: var(--card-bg);
       border-radius: 16px;
       padding: 20px;
-      border: 1px solid #2d2d3d;
+      border: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -67,9 +102,9 @@
       font-size: 16px;
       line-height: 1.6;
       margin-bottom: 20px;
+      white-space: pre-line;
     }
 
-    /* Кнопки выбора */
     .choices-container {
       display: flex;
       flex-direction: column;
@@ -77,9 +112,9 @@
     }
 
     .choice-btn {
-      background-color: #242433;
+      background-color: var(--bg-color);
       color: var(--text-color);
-      border: 1px solid #3d3d52;
+      border: 1px solid var(--border-color);
       padding: 14px;
       border-radius: 10px;
       font-size: 15px;
@@ -91,138 +126,224 @@
     .choice-btn:hover {
       background-color: var(--accent-color);
       border-color: var(--accent-hover);
+      color: #ffffff;
     }
 
-    /* Кнопка доната (в будущем для Звёзд) */
     .donate-btn {
       background: linear-gradient(135deg, #ffaa00, #ff5500);
       color: #fff;
       border: none;
-      padding: 8px 12px;
+      padding: 10px 16px;
       border-radius: 8px;
       font-weight: bold;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 13px;
+      box-shadow: 0 4px 10px rgba(255, 85, 0, 0.3);
     }
   </style>
 </head>
 <body>
 
+  <!-- Панель настроек -->
+  <div class="settings-panel">
+    <select id="lang-select" onchange="changeLanguage(this.value)">
+      <option value="ru">🇷🇺 Русский</option>
+      <option value="en">🇺🇸 English</option>
+      <option value="es">🇪🇸 Español</option>
+      <option value="de">🇩🇪 Deutsch</option>
+      <option value="fr">🇫🇷 Français</option>
+      <option value="ga">🇮🇪 Gaeilge</option>
+    </select>
+    <button onclick="toggleTheme()">🎨 <span id="theme-btn-text">Сменить тему</span></button>
+  </div>
+
   <!-- Статус игрока -->
   <div class="status-bar">
     <div class="status-item">
-      <span>❤️ Здоровье</span>
+      <span id="label-hp">❤️ Здоровье</span>
       <span class="status-val" id="hp-val">100/100</span>
     </div>
     <div class="status-item">
-      <span>🔥 Факелы</span>
+      <span id="label-energy">🔥 Факелы</span>
       <span class="status-val" id="energy-val">20/20</span>
     </div>
     <div class="status-item">
-      <span>💰 Золото</span>
+      <span id="label-gold">💰 Золото</span>
       <span class="status-val" id="gold-val">0</span>
     </div>
   </div>
 
   <!-- Окно истории -->
   <div class="quest-container">
-    <div class="story-text" id="story-display">
-      Вы стоите на пороге Проклятого Склепа. Ветер доносит запах сырости и древней магии. Из темноты доносится странный шорох... Что вы предпримете?
-    </div>
-
-    <!-- Варианты действий -->
-    <div class="choices-container" id="choices-display">
-      <button class="choice-btn" onclick="goToScene('crypt_inside')">🚪 Войти внутрь (-1 факел)</button>
-      <button class="choice-btn" onclick="goToScene('search_camp')">🔍 Обыскать заброшенный лагерь рядом</button>
-    </div>
+    <div class="story-text" id="story-display"></div>
+    <div class="choices-container" id="choices-display"></div>
   </div>
 
-  <!-- Нижняя панель для быстрых покупок -->
+  <!-- Панель доната -->
   <div style="text-align: center;">
-    <button class="donate-btn" onclick="buyEnergy()">⭐ Купить 5 Факелов (за Звёзды)</button>
+    <button class="donate-btn" id="donate-btn-text" onclick="buyEnergy()">⭐ Купить 5 Факелов (за Звёзды)</button>
   </div>
 
   <script>
-    // Инициализация Telegram WebApp
     const tg = window.Telegram.WebApp;
-    tg.expand(); // Разворачиваем на весь экран
+    tg.expand();
 
-    // Состояние игрока
-    let player = {
-      hp: 100,
-      energy: 20,
-      gold: 0
+    let player = { hp: 100, energy: 20, gold: 0 };
+    let currentLang = 'ru';
+    let currentThemeIndex = 0;
+    const themes = ['dark', 'light', 'ebon'];
+    let currentScene = 'start';
+
+    // Локализация интерфейса
+    const uiTranslations = {
+      ru: { hp: "❤️ Здоровье", energy: "🔥 Факелы", gold: "💰 Золото", donate: "⭐ Купить 5 Факелов (за Звёзды)", theme: "Сменить тему", noEnergy: "У вас закончились факелы! Купите новые или подождите." },
+      en: { hp: "❤️ Health", energy: "🔥 Torches", gold: "💰 Gold", donate: "⭐ Buy 5 Torches (via Stars)", theme: "Change Theme", noEnergy: "Out of torches! Buy more or wait." },
+      es: { hp: "❤️ Salud", energy: "🔥 Antorchas", gold: "💰 Oro", donate: "⭐ Comprar 5 Antorchas (con Estrellas)", theme: "Cambiar Tema", noEnergy: "¡Sin antorchas! Compra más o espera." },
+      de: { hp: "❤️ Gesundheit", energy: "🔥 Fackeln", gold: "💰 Gold", donate: "⭐ 5 Fackeln kaufen (Sterne)", theme: "Thema ändern", noEnergy: "Keine Fackeln mehr! Kaufe mehr oder warte." },
+      fr: { hp: "❤️ Santé", energy: "🔥 Torches", gold: "💰 Or", donate: "⭐ Acheter 5 Torches (via Étoiles)", theme: "Changer de Thème", noEnergy: "Plus de torches ! Achetez-en ou attendez." },
+      ga: { hp: "❤️ Sláinte", energy: "🔥 Lóicéid", gold: "💰 Ór", donate: "⭐ Ceannaigh 5 Lóicéid", theme: "Athraigh Téama", noEnergy: "Gan lóicéid! Ceannaigh níos mó." }
     };
 
-    // База данных локаций и сцен
-    const story = {
+    // Мультиязычный сюжет
+    const storyData = {
       start: {
-        text: "Вы стоите на пороге Проклятого Склепа. Ветер доносит запах сырости и древней магии. Из темноты доносится странный шорох...",
-        choices: [
-          { text: "🚪 Войти внутрь (-1 факел)", action: () => { player.energy -= 1; goToScene('crypt_inside'); } },
-          { text: "🔍 Обыскать заброшенный лагерь рядом", action: () => goToScene('search_camp') }
-        ]
+        ru: { text: "Вы стоите на пороге Проклятого Склепа. Ветер доносит запах сырости. Из темноты доносится странный шорох...", choices: [{ text: "🚪 Войти внутрь (-1 факел)", next: "crypt_inside", cost: true }, { text: "🔍 Обыскать лагерь рядом", next: "search_camp" }] },
+        en: { text: "You stand at the gates of the Cursed Crypt. The wind carries the scent of dampness. A strange rustling comes from the dark...", choices: [{ text: "🚪 Enter inside (-1 torch)", next: "crypt_inside", cost: true }, { text: "🔍 Search nearby camp", next: "search_camp" }] },
+        es: { text: "Estás a las puertas de la Cripta Maldita. El viento trae olor a humedad. Un extraño crujido proviene de la oscuridad...", choices: [{ text: "🚪 Entrar (-1 antorcha)", next: "crypt_inside", cost: true }, { text: "🔍 Registrar el campamento cercano", next: "search_camp" }] },
+        de: { text: "Du stehst an den Toren der Verfluchten Krypta. Der Wind trägt den Geruch von Feuchtigkeit. Ein seltsames Rascheln kommt aus der Dunkelheit...", choices: [{ text: "🚪 Eintreten (-1 Fackel)", next: "crypt_inside", cost: true }, { text: "🔍 Nahegelegenes Lager untersuchen", next: "search_camp" }] },
+        fr: { text: "Vous vous tenez aux portes de la Crypte Maudite. Le vent apporte une odeur d'humidité. Un étrange bruissement vient de l'obscurité...", choices: [{ text: "🚪 Entrer à l'intérieur (-1 torche)", next: "crypt_inside", cost: true }, { text: "🔍 Fouiller le camp à proximité", next: "search_camp" }] },
+        ga: { text: "Seasann tú ag geataí na hUaimhe Mallaithe. Beireann an ghaoth boladh na taise. Tagann fásach aisteach as an dorchadas...", choices: [{ text: "🚪 Téigh isteach (-1 lóicéad)", next: "crypt_inside", cost: true }, { text: "🔍 Cuardaigh campa in aice láimhe", next: "search_camp" }] }
       },
       crypt_inside: {
-        text: "Внутри склепа кромешная тьма. Ваш факел едва освещает сырые стены. Вдруг перед вами вырастает полуразрушенный саркофаг, опутанный цепями.",
-        choices: [
-          { text: "⚔️ Сорвать цепи и открыть его", action: () => { player.gold += 50; goToScene('loot_found'); } },
-          { text: "↩️ Вернуться к выходу", action: () => goToScene('start') }
-        ]
+        ru: { text: "Внутри склепа холод. Ваш факел едва освещает сырые стены. Вдруг путь вам преграждает оживший Скелет-Страж с ржавым мечом!", choices: [{ text: "⚔️ Атаковать его в лоб (-20 HP)", next: "kill_skeleton" }, { text: "🏃 Попробовать пробежать мимо (-1 факел)", next: "run_past", cost: true }] },
+        en: { text: "It is freezing inside. Your torch barely lights the damp walls. Suddenly, an animated Skeleton Guard with a rusty sword blocks your way!", choices: [{ text: "⚔️ Attack head-on (-20 HP)", next: "kill_skeleton" }, { text: "🏃 Try to run past (-1 torch)", next: "run_past", cost: true }] },
+        es: { text: "Hace un frío glacial dentro. Tu antorcha apenas ilumina las paredes húmedas. ¡De repente, un Esqueleto Guardián con una espada oxidada te bloquea el paso!", choices: [{ text: "⚔️ Atacar de frente (-20 HP)", next: "kill_skeleton" }, { text: "🏃 Intentar correr de largo (-1 antorcha)", next: "run_past", cost: true }] },
+        de: { text: "Es ist eiskalt drinnen. Deine Fackel erhellt kaum die feuchten Wände. Plötzlich versperrt dir ein belebter Skelettwächter mit einem rostigen Schwert den Weg!", choices: [{ text: "⚔️ Frontal angreifen (-20 HP)", next: "kill_skeleton" }, { text: "🏃 Vorbeirennen (-1 Fackel)", next: "run_past", cost: true }] },
+        fr: { text: "Il fait un froid glacial à l'intérieur. Votre torche éclaire à peine les murs humides. Soudain, un Squelette Garde animé avec une épée rouillée vous bloque le passage !", choices: [{ text: "⚔️ Attaquer de front (-20 HP)", next: "kill_skeleton" }, { text: "🏃 Tenter de passer en courant (-1 torche)", next: "run_past", cost: true }] },
+        ga: { text: "Tá sé reo laistigh. Is ar éigean a lasann do lóicéad na ballaí taise. Go tobann, cuireann Sclábhaí Cnámharlaigh ríofa bac ar do bhealach!", choices: [{ text: "⚔️ Ionsaigh go díreach (-20 HP)", next: "kill_skeleton" }, { text: "🏃 Déan iarracht rith thart (-1 lóicéad)", next: "run_past", cost: true }] }
       },
       search_camp: {
-        text: "В лагере пусто, но под старыми шкурами вы находите кошель с парой монет! Правда, вы знатно исцарапали руки о ржавые гвозди.",
-        choices: [
-          { text: "Забрать добычу (+10 золота, -10 HP)", action: () => { player.gold += 10; player.hp -= 10; goToScene('start'); } }
-        ]
+        ru: { text: "В лагере пусто, но под старыми шкурами вы находите кошель с золотом! Однако, вы знатно исцарапали руки о ржавые гвозди.", choices: [{ text: "💰 Забрать добычу (+25 золота, -15 HP)", next: "loot_camp" }] },
+        en: { text: "The camp is empty, but under old skins you find a pouch of gold! However, you badly scratched your hands on rusty nails.", choices: [{ text: "💰 Take loot (+25 Gold, -15 HP)", next: "loot_camp" }] },
+        es: { text: "El campamento está vacío, ¡pero bajo unas pieles viejas encuentras una bolsa de oro! Sin embargo, te raspas gravemente las manos con clavos oxidados.", choices: [{ text: "💰 Tomar el botín (+25 Oro, -15 HP)", next: "loot_camp" }] },
+        de: { text: "Das Lager ist leer, aber unter alten Fellen findest du einen Beutel Gold! Allerdings hast du dir an rostigen Nägeln übel die Hände zerkratzt.", choices: [{ text: "💰 Beute nehmen (+25 Gold, -15 HP)", next: "loot_camp" }] },
+        fr: { text: "Le camp est vide, mais sous de vieilles peaux, vous trouvez une bourse d'or ! Cependant, vous vous égratignez gravement les mains sur des clous rouillés.", choices: [{ text: "💰 Prendre le butin (+25 Or, -15 HP)", next: "loot_camp" }] },
+        ga: { text: "Tá an campa folamh, ach faoi sheanghraiceanna aimsíonn tú spaga óir! Mar sin féin, d'scraith tú do lámha ar tairní meirgeacha.", choices: [{ text: "💰 Tóg an loot (+25 Ór, -15 HP)", next: "loot_camp" }] }
       },
-      loot_found: {
-        text: "Саркофаг поддался! Внутри вы нашли древние сокровища. Вы богаты, но проклятие этого места теперь тяготеет над вами...",
-        choices: [
-          { text: "🔄 Начать приключение сначала", action: () => { player.hp = 100; player.energy = 20; player.gold = 0; goToScene('start'); } }
-        ]
+      kill_skeleton: {
+        ru: { text: "Вы сокрушили кости врага мощным ударом! Из его останков выпал древний изумруд.", choices: [{ text: "💎 Забрать изумруд (+100 золота)", next: "win_scene" }] },
+        en: { text: "You crushed the enemy's bones with a powerful blow! A pristine ancient emerald fell from its remains.", choices: [{ text: "💎 Take emerald (+100 Gold)", next: "win_scene" }] },
+        es: { text: "¡Destrozaste los huesos del enemigo сon un golpe poderoso! Una antigua esmeralda cayó de sus restos.", choices: [{ text: "💎 Tomar la esmeralda (+100 Oro)", next: "win_scene" }] },
+        de: { text: "Du hast die Knochen des Feindes mit einem gewaltigen Schlag zertrümmert! Ein uralter Smaragd fiel aus seinen Überresten.", choices: [{ text: "💎 Smaragd nehmen (+100 Gold)", next: "win_scene" }] },
+        fr: { text: "Vous avez brisé les os de l'ennemi d'un coup puissant ! Émeraude antique est tombée de ses restes.", choices: [{ text: "💎 Prendre l'émeraude (+100 Or)", next: "win_scene" }] },
+        ga: { text: "Phrúigh tú cnámha an namhad le buille cumhachtach! Thit emerald ársa as a iarsmaí.", choices: [{ text: "💎 Tóg emerald (+100 Ór)", next: "win_scene" }] }
+      },
+      run_past: {
+        ru: { text: "Вы рванули вперед, бросив факел ему в лицо. Скелет растерялся, и вы проскочили в сокровищницу склепа!", choices: [{ text: "👑 Обыскать сундуки", next: "win_scene" }] },
+        en: { text: "You dashed forward, throwing the torch right into its face. The skeleton stumbled, and you slipped into the treasury!", choices: [{ text: "👑 Search chests", next: "win_scene" }] },
+        es: { text: "Te lanzaste hacia adelante, arrojando la antorcha a su cara. ¡El esqueleto tropezó y te colaste en la tesorería!", choices: [{ text: "👑 Registrar cofres", next: "win_scene" }] },
+        de: { text: "Du bist nach vorne gestürmt und hast ihm die Fackel ins Gesicht geworfen. Das Skelett stolperte und du bist in die Schatzkammer geschlüpft!", choices: [{ text: "👑 Truhen durchsuchen", next: "win_scene" }] },
+        fr: { text: "Vous vous êtes élancé vers l'avant, lui jetant la torche au visage. Le squelette a trébuché et vous vous êtes glissé dans la salle au trésor !", choices: [{ text: "👑 Fouiller les coffres", next: "win_scene" }] },
+        ga: { text: "Phléasc tú ar aghaidh, ag caitheamh an lóicéid isteach ina aghaidh. Chraith an cnámharlach, agus d'éalaigh tú isteach sa taisce!", choices: [{ text: "👑 Cuardaigh cistí", next: "win_scene" }] }
+      },
+      loot_camp: {
+        ru: { text: "Кошель ваш. Вы перевязываете раны и снова смотрите на темнеющий зловещий вход в склеп.", choices: [{ text: "🚪 Идти к склепу", next: "start" }] },
+        en: { text: "The pouch is yours. You bandage your cuts and look once more at the darkening, ominous entrance to the crypt.", choices: [{ text: "🚪 Go to the crypt", next: "start" }] },
+        es: { text: "La bolsa es tuya. Vendas tus heridas y miras una vez más la oscura y ominosa entrada de la cripta.", choices: [{ text: "🚪 Ir a la cripta", next: "start" }] },
+        de: { text: "Der Beutel gehört dir. Du verbindest deine Wunden und blickst noch einmal auf den dunkler werdenden, unheilvollen Eingang zur Krypta.", choices: [{ text: "🚪 Zur Krypta gehen", next: "start" }] },
+        fr: { text: "La bourse est à vous. Vous pansez vos coupures et regardez une fois de plus l'entrée sombre et menaçante de la crypte.", choices: [{ text: "🚪 Aller à la crypte", next: "start" }] },
+        ga: { text: "Is leat an spaga. Bandáitíonn tú do chuid gearrthacha agus féachann tú arís ar an mbealach isteach dorcha don uaimh.", choices: [{ text: "🚪 Téigh go dtí an uaimh", next: "start" }] }
+      },
+      win_scene: {
+        ru: { text: "Отличная добыча! Вы успешно завершили первый этап подземелья. Проклятие склепа отступает.", choices: [{ text: "🔄 Начать заново", next: "reset" }] },
+        en: { text: "Great loot! You have successfully cleared the first stage of the dungeon. The crypt's curse fades.", choices: [{ text: "🔄 Restart adventure", next: "reset" }] },
+        es: { text: "¡Buen botín! Has completado con éxito la primera etapa de la mazmorra. La maldición de la cripta se desvanece.", choices: [{ text: "🔄 Reiniciar aventura", next: "reset" }] },
+        de: { text: "Tolle Beute! Du hast die erste Stufe des Dungeons erfolgreich abgeschlossen. Der Fluch der Krypta verblasst.", choices: [{ text: "🔄 Abenteuer neu starten", next: "reset" }] },
+        fr: { text: "Super butin ! Vous avez réussi à vider la première étape du donjon. La malédiction de la crypte s'estompe.", choices: [{ text: "🔄 Recommencer l'aventure", next: "reset" }] },
+        ga: { text: "Loot iontach! D'éirigh leat an chéad chéim den dún a ghlanadh. Mathaíonn mallacht na huaimhe.", choices: [{ text: "🔄 Atosaigh eachtra", next: "reset" }] }
       }
     };
 
-    // Функция обновления интерфейса
     function updateUI() {
+      document.getElementById('label-hp').innerText = uiTranslations[currentLang].hp;
+      document.getElementById('label-energy').innerText = uiTranslations[currentLang].energy;
+      document.getElementById('label-gold').innerText = uiTranslations[currentLang].gold;
+      document.getElementById('donate-btn-text').innerText = uiTranslations[currentLang].donate;
+      document.getElementById('theme-btn-text').innerText = uiTranslations[currentLang].theme;
+
       document.getElementById('hp-val').innerText = player.hp + "/100";
       document.getElementById('energy-val').innerText = player.energy + "/20";
       document.getElementById('gold-val').innerText = player.gold;
     }
 
-    // Функция перехода по сценам
-    function goToScene(sceneKey) {
-      const scene = story[sceneKey];
+    function renderScene() {
+      const scene = storyData[currentScene][currentLang];
       document.getElementById('story-display').innerText = scene.text;
       
       const choicesDiv = document.getElementById('choices-display');
-      choicesDiv.innerHTML = ''; // Очищаем старые кнопки
+      choicesDiv.innerHTML = '';
       
       scene.choices.forEach(choice => {
         const btn = document.createElement('button');
         btn.className = 'choice-btn';
         btn.innerText = choice.text;
-        btn.onclick = () => {
-          choice.action();
-          updateUI();
-        };
+        btn.onclick = () => handleChoice(choice);
         choicesDiv.appendChild(btn);
       });
       updateUI();
     }
 
-    // Тестовая функция покупки энергии
+    function handleChoice(choice) {
+      if (choice.cost && player.energy <= 0) {
+        alert(uiTranslations[currentLang].noEnergy);
+        return;
+      }
+
+      if (currentScene === 'start' && choice.next === 'crypt_inside') player.energy -= 1;
+      if (currentScene === 'crypt_inside' && choice.next === 'kill_skeleton') player.hp -= 20;
+      if (currentScene === 'crypt_inside' && choice.next === 'run_past') player.energy -= 1;
+      if (currentScene === 'start' && choice.next === 'search_camp') { player.gold += 25; player.hp -= 15; }
+      if (currentScene === 'kill_skeleton') player.gold += 100;
+
+      if (choice.next === 'reset') {
+        player = { hp: 100, energy: 20, gold: 0 };
+        currentScene = 'start';
+      } else {
+        currentScene = choice.next;
+      }
+
+      renderScene();
+    }
+
+    function changeLanguage(lang) {
+      currentLang = lang;
+      renderScene();
+    }
+
+    function toggleTheme() {
+      currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+      document.documentElement.setAttribute('data-theme', themes[currentThemeIndex]);
+    }
+
     function buyEnergy() {
+      const titles = { ru: 'Покупка факелов', en: 'Buy Torches', es: 'Comprar antorchas', de: 'Fackeln kaufen', fr: 'Acheter des torches', ga: 'Ceannaigh Lóicéid' };
+      const messages = { 
+        ru: 'Здесь будет выставляться официальный счёт на Telegram Stars.', 
+        en: 'This will open an official Telegram Stars invoice.',
+        es: 'Esto abrirá una factura oficial de Telegram Stars.',
+        de: 'Dies öffnet eine offizielle Telegram Stars-Rechnung.',
+        fr: 'Cela ouvrira une facture officielle Telegram Stars.',
+        ga: 'Osclóidh sé seo sonrasc oifigiúil Telegram Stars.'
+      };
+      
       tg.showPopup({
-        title: 'Покупка энергии',
-        message: 'Здесь будет открываться официальный счёт Telegram Stars на покупку факелов.',
-        buttons: [{type: 'ok', text: 'Понятно'}]
+        title: titles[currentLang] || titles['en'],
+        message: messages[currentLang] || messages['en'],
+        buttons: [{type: 'ok', text: 'OK'}]
       });
     }
 
-    // Первичный запуск
-    updateUI();
+    renderScene();
   </script>
 </body>
 </html>
