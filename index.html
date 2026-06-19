@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dark Fantasy RPG</title>
+  <title>Grim Crypt RPG</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
@@ -64,25 +64,39 @@
     }
 
     .status-bar {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
       background: var(--card-bg);
       padding: 12px;
       border-radius: 12px;
-      font-size: 14px;
+      font-size: 13px;
       border: 1px solid var(--border-color);
-      margin-bottom: 16px;
+      margin-bottom: 10px;
     }
 
     .status-item {
       display: flex;
       flex-direction: column;
       align-items: center;
+      text-align: center;
     }
 
     .status-val {
       font-weight: bold;
       color: var(--accent-hover);
+      margin-top: 4px;
+    }
+
+    .inventory-bar {
+      background: var(--card-bg);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      border: 1px dashed var(--border-color);
+      margin-bottom: 12px;
+      text-align: center;
+      color: #a3a3b2;
     }
 
     .quest-container {
@@ -99,10 +113,22 @@
     }
 
     .story-text {
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1.6;
       margin-bottom: 20px;
       white-space: pre-line;
+    }
+
+    .enemy-hp-box {
+      background: rgba(255, 0, 0, 0.1);
+      border: 1px solid #ff3333;
+      padding: 8px;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 15px;
+      font-weight: bold;
+      color: #ff5555;
+      display: none;
     }
 
     .choices-container {
@@ -115,9 +141,9 @@
       background-color: var(--bg-color);
       color: var(--text-color);
       border: 1px solid var(--border-color);
-      padding: 14px;
+      padding: 12px 14px;
       border-radius: 10px;
-      font-size: 15px;
+      font-size: 14px;
       text-align: left;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -144,7 +170,6 @@
 </head>
 <body>
 
-  <!-- Панель настроек -->
   <div class="settings-panel">
     <select id="lang-select" onchange="changeLanguage(this.value)">
       <option value="ru">🇷🇺 Русский</option>
@@ -157,7 +182,6 @@
     <button onclick="toggleTheme()">🎨 <span id="theme-btn-text">Сменить тему</span></button>
   </div>
 
-  <!-- Статус игрока -->
   <div class="status-bar">
     <div class="status-item">
       <span id="label-hp">❤️ Здоровье</span>
@@ -173,13 +197,18 @@
     </div>
   </div>
 
-  <!-- Окно истории -->
+  <div class="inventory-bar" id="inventory-display"></div>
+
   <div class="quest-container">
-    <div class="story-text" id="story-display"></div>
+    <div>
+      <div class="enemy-hp-box" id="enemy-hp-box">
+        <span id="enemy-name-label">💀 Скелет-Страж</span> HP: <span id="enemy-hp-val">50</span>
+      </div>
+      <div class="story-text" id="story-display"></div>
+    </div>
     <div class="choices-container" id="choices-display"></div>
   </div>
 
-  <!-- Панель доната -->
   <div style="text-align: center;">
     <button class="donate-btn" id="donate-btn-text" onclick="buyEnergy()">⭐ Купить 5 Факелов (за Звёзды)</button>
   </div>
@@ -188,162 +217,381 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    let player = { hp: 100, energy: 20, gold: 0 };
-    let currentLang = 'ru';
-    let currentThemeIndex = 0;
-    const themes = ['dark', 'light', 'ebon'];
-    let currentScene = 'start';
+    const CURRENT_VERSION = "1.1";
 
-    // Локализация интерфейса
-    const uiTranslations = {
-      ru: { hp: "❤️ Здоровье", energy: "🔥 Факелы", gold: "💰 Золото", donate: "⭐ Купить 5 Факелов (за Звёзды)", theme: "Сменить тему", noEnergy: "У вас закончились факелы! Купите новые или подождите." },
-      en: { hp: "❤️ Health", energy: "🔥 Torches", gold: "💰 Gold", donate: "⭐ Buy 5 Torches (via Stars)", theme: "Change Theme", noEnergy: "Out of torches! Buy more or wait." },
-      es: { hp: "❤️ Salud", energy: "🔥 Antorchas", gold: "💰 Oro", donate: "⭐ Comprar 5 Antorchas (con Estrellas)", theme: "Cambiar Tema", noEnergy: "¡Sin antorchas! Compra más o espera." },
-      de: { hp: "❤️ Gesundheit", energy: "🔥 Fackeln", gold: "💰 Gold", donate: "⭐ 5 Fackeln kaufen (Sterne)", theme: "Thema ändern", noEnergy: "Keine Fackeln mehr! Kaufe mehr oder warte." },
-      fr: { hp: "❤️ Santé", energy: "🔥 Torches", gold: "💰 Or", donate: "⭐ Acheter 5 Torches (via Étoiles)", theme: "Changer de Thème", noEnergy: "Plus de torches ! Achetez-en ou attendez." },
-      ga: { hp: "❤️ Sláinte", energy: "🔥 Lóicéid", gold: "💰 Ór", donate: "⭐ Ceannaigh 5 Lóicéid", theme: "Athraigh Téama", noEnergy: "Gan lóicéid! Ceannaigh níos mó." }
+    let state = {
+      version: CURRENT_VERSION,
+      player: { hp: 100, energy: 20, gold: 0, inventory: [] },
+      enemy: { hp: 0, maxHp: 50, active: false },
+      currentScene: 'start',
+      currentLang: 'ru',
+      currentThemeIndex: 0,
+      battleLog: '',
+      campRollResult: null,
+      chestOpened: false
     };
 
-    // Мультиязычный сюжет
+    const themes = ['dark', 'light', 'ebon'];
+
+    const ui = {
+      ru: { hp: "❤️ Здоровье", energy: "🔥 Факелы", gold: "💰 Золото", donate: "⭐ Купить 5 Факелов (за Звёзды)", theme: "Сменить тему", noEnergy: "У вас закончились факелы!", emptyInv: "🎒 Заплечный мешок пуст", invTitle: "🎒 Инвентарь: ", gameOver: "💀 Вы погибли в глубинах склепа... Авантюра окончена.", restartBtn: "🔄 Начать заново", enemyName: "💀 Скелет-Страж", keyItem: "🔑 Ключ от Сокровищницы", pouchItem: "🪙 Кошель", successBuy: "Успешная покупка! +5 факелов." },
+      en: { hp: "❤️ Health", energy: "🔥 Torches", gold: "💰 Gold", donate: "⭐ Buy 5 Torches (via Stars)", theme: "Change Theme", noEnergy: "Out of torches!", emptyInv: "🎒 Backpack is empty", invTitle: "🎒 Inventory: ", gameOver: "💀 You perished in the depths of the crypt...", restartBtn: "🔄 Restart", enemyName: "💀 Skeleton Guard", keyItem: "🔑 Treasury Key", pouchItem: "🪙 Old Pouch", successBuy: "Purchase successful! +5 torches." },
+      es: { hp: "❤️ Salud", energy: "🔥 Antorchas", gold: "💰 Oro", donate: "⭐ Comprar 5 Antorchas", theme: "Cambiar Tema", noEnergy: "¡Sin antorchas!", emptyInv: "🎒 Mochila vacía", invTitle: "🎒 Inventario: ", gameOver: "💀 Has perecido en las profundidades...", restartBtn: "🔄 Reiniciar", enemyName: "💀 Esqueleto Guardián", keyItem: "🔑 Clave del Tesoro", pouchItem: "🪙 Bolsa Vieja", successBuy: "¡Compra con éxito! +5 antorchas." },
+      de: { hp: "❤️ Gesundheit", energy: "🔥 Fackeln", gold: "💰 Gold", donate: "⭐ 5 Fackeln kaufen", theme: "Thema ändern", noEnergy: "Keine Fackeln mehr!", emptyInv: "🎒 Rucksack ist leer", invTitle: "🎒 Inventar: ", gameOver: "💀 Du bist in den Tiefen der Krypta gestorben...", restartBtn: "🔄 Neu starten", enemyName: "💀 Skelettwächter", keyItem: "🔑 Tresorschlüssel", pouchItem: "🪙 Alter Beutel", successBuy: "Kauf erfolgreich! +5 Fackeln." },
+      fr: { hp: "❤️ Santé", energy: "🔥 Torches", gold: "💰 Or", donate: "⭐ Acheter 5 Torches", theme: "Changer de Thème", noEnergy: "Plus de torches !", emptyInv: "🎒 Le sac à dos est vide", invTitle: "🎒 Inventaire: ", gameOver: "💀 Vous avez péri dans les profondeurs...", restartBtn: "🔄 Recommencer", enemyName: "💀 Squelette Garde", keyItem: "🔑 Clé du Trésor", pouchItem: "🪙 Vieille Bourse", successBuy: "Achat réussi ! +5 torches." },
+      ga: { hp: "❤️ Sláinte", energy: "🔥 Lóicéid", gold: "💰 Ór", donate: "⭐ Ceannaigh 5 Lóicéid", theme: "Athraigh Téama", noEnergy: "Gan lóicéid!", emptyInv: "🎒 Tá an mála folamh", invTitle: "🎒 Fardal: ", gameOver: "💀 Fuair tú bás i ndorchadas na huaimhe...", restartBtn: "🔄 Atosaigh", enemyName: "💀 Sclábhaí Cnámharlaigh", keyItem: "🔑 Eochair Taisce", pouchItem: "🪙 Sean-Spaga", successBuy: "Ceannach rathúil! +5 lóicéid." }
+    };
+
     const storyData = {
       start: {
-        ru: { text: "Вы стоите на пороге Проклятого Склепа. Ветер доносит запах сырости. Из темноты доносится странный шорох...", choices: [{ text: "🚪 Войти внутрь (-1 факел)", next: "crypt_inside", cost: true }, { text: "🔍 Обыскать лагерь рядом", next: "search_camp" }] },
-        en: { text: "You stand at the gates of the Cursed Crypt. The wind carries the scent of dampness. A strange rustling comes from the dark...", choices: [{ text: "🚪 Enter inside (-1 torch)", next: "crypt_inside", cost: true }, { text: "🔍 Search nearby camp", next: "search_camp" }] },
-        es: { text: "Estás a las puertas de la Cripta Maldita. El viento trae olor a humedad. Un extraño crujido proviene de la oscuridad...", choices: [{ text: "🚪 Entrar (-1 antorcha)", next: "crypt_inside", cost: true }, { text: "🔍 Registrar el campamento cercano", next: "search_camp" }] },
-        de: { text: "Du stehst an den Toren der Verfluchten Krypta. Der Wind trägt den Geruch von Feuchtigkeit. Ein seltsames Rascheln kommt aus der Dunkelheit...", choices: [{ text: "🚪 Eintreten (-1 Fackel)", next: "crypt_inside", cost: true }, { text: "🔍 Nahegelegenes Lager untersuchen", next: "search_camp" }] },
-        fr: { text: "Vous vous tenez aux portes de la Crypte Maudite. Le vent apporte une odeur d'humidité. Un étrange bruissement vient de l'obscurité...", choices: [{ text: "🚪 Entrer à l'intérieur (-1 torche)", next: "crypt_inside", cost: true }, { text: "🔍 Fouiller le camp à proximité", next: "search_camp" }] },
-        ga: { text: "Seasann tú ag geataí na hUaimhe Mallaithe. Beireann an ghaoth boladh na taise. Tagann fásach aisteach as an dorchadas...", choices: [{ text: "🚪 Téigh isteach (-1 lóicéad)", next: "crypt_inside", cost: true }, { text: "🔍 Cuardaigh campa in aice láimhe", next: "search_camp" }] }
-      },
-      crypt_inside: {
-        ru: { text: "Внутри склепа холод. Ваш факел едва освещает сырые стены. Вдруг путь вам преграждает оживший Скелет-Страж с ржавым мечом!", choices: [{ text: "⚔️ Атаковать его в лоб (-20 HP)", next: "kill_skeleton" }, { text: "🏃 Попробовать пробежать мимо (-1 факел)", next: "run_past", cost: true }] },
-        en: { text: "It is freezing inside. Your torch barely lights the damp walls. Suddenly, an animated Skeleton Guard with a rusty sword blocks your way!", choices: [{ text: "⚔️ Attack head-on (-20 HP)", next: "kill_skeleton" }, { text: "🏃 Try to run past (-1 torch)", next: "run_past", cost: true }] },
-        es: { text: "Hace un frío glacial dentro. Tu antorcha apenas ilumina las paredes húmedas. ¡De repente, un Esqueleto Guardián con una espada oxidada te bloquea el paso!", choices: [{ text: "⚔️ Atacar de frente (-20 HP)", next: "kill_skeleton" }, { text: "🏃 Intentar correr de largo (-1 antorcha)", next: "run_past", cost: true }] },
-        de: { text: "Es ist eiskalt drinnen. Deine Fackel erhellt kaum die feuchten Wände. Plötzlich versperrt dir ein belebter Skelettwächter mit einem rostigen Schwert den Weg!", choices: [{ text: "⚔️ Frontal angreifen (-20 HP)", next: "kill_skeleton" }, { text: "🏃 Vorbeirennen (-1 Fackel)", next: "run_past", cost: true }] },
-        fr: { text: "Il fait un froid glacial à l'intérieur. Votre torche éclaire à peine les murs humides. Soudain, un Squelette Garde animé avec une épée rouillée vous bloque le passage !", choices: [{ text: "⚔️ Attaquer de front (-20 HP)", next: "kill_skeleton" }, { text: "🏃 Tenter de passer en courant (-1 torche)", next: "run_past", cost: true }] },
-        ga: { text: "Tá sé reo laistigh. Is ar éigean a lasann do lóicéad na ballaí taise. Go tobann, cuireann Sclábhaí Cnámharlaigh ríofa bac ar do bhealach!", choices: [{ text: "⚔️ Ionsaigh go díreach (-20 HP)", next: "kill_skeleton" }, { text: "🏃 Déan iarracht rith thart (-1 lóicéad)", next: "run_past", cost: true }] }
+        ru: { text: "Вы стоите на пороге Проклятого Склепа. Ветер доносит запах сырости. Из темноты доносится странный шорох...", choices: () => getStartChoices('ru') },
+        en: { text: "You stand at the gates of the Cursed Crypt. The wind carries the scent of dampness. A strange rustling comes from the dark...", choices: () => getStartChoices('en') },
+        es: { text: "Estás a las puertas de la Cripta Maldita. El viento trae olor a humedad. Un extraño crujido proviene de la oscuridad...", choices: () => getStartChoices('es') },
+        de: { text: "Du stehst an den Toren der Verfluchten Krypta. Der Wind trägt den Geruch von Feuchtigkeit. Ein seltsames Rascheln...", choices: () => getStartChoices('de') },
+        fr: { text: "Vous vous tenez aux portes de la Crypte Maudite. Le vent apporte une odeur d'humidité. Un étrange bruissement...", choices: () => getStartChoices('fr') },
+        ga: { text: "Seasann tú ag geataí na hUaimhe Mallaithe. Beireann an ghaoth boladh na taise. Tagann fásach aisteach...", choices: () => getStartChoices('ga') }
       },
       search_camp: {
-        ru: { text: "В лагере пусто, но под старыми шкурами вы находите кошель с золотом! Однако, вы знатно исцарапали руки о ржавые гвозди.", choices: [{ text: "💰 Забрать добычу (+25 золота, -15 HP)", next: "loot_camp" }] },
-        en: { text: "The camp is empty, but under old skins you find a pouch of gold! However, you badly scratched your hands on rusty nails.", choices: [{ text: "💰 Take loot (+25 Gold, -15 HP)", next: "loot_camp" }] },
-        es: { text: "El campamento está vacío, ¡pero bajo unas pieles viejas encuentras una bolsa de oro! Sin embargo, te raspas gravemente las manos con clavos oxidados.", choices: [{ text: "💰 Tomar el botín (+25 Oro, -15 HP)", next: "loot_camp" }] },
-        de: { text: "Das Lager ist leer, aber unter alten Fellen findest du einen Beutel Gold! Allerdings hast du dir an rostigen Nägeln übel die Hände zerkratzt.", choices: [{ text: "💰 Beute nehmen (+25 Gold, -15 HP)", next: "loot_camp" }] },
-        fr: { text: "Le camp est vide, mais sous de vieilles peaux, vous trouvez une bourse d'or ! Cependant, vous vous égratignez gravement les mains sur des clous rouillés.", choices: [{ text: "💰 Prendre le butin (+25 Or, -15 HP)", next: "loot_camp" }] },
-        ga: { text: "Tá an campa folamh, ach faoi sheanghraiceanna aimsíonn tú spaga óir! Mar sin féin, d'scraith tú do lámha ar tairní meirgeacha.", choices: [{ text: "💰 Tóg an loot (+25 Ór, -15 HP)", next: "loot_camp" }] }
+        ru: { text: () => getCampText('ru'), choices: () => getCampChoices('ru') },
+        en: { text: () => getCampText('en'), choices: () => getCampChoices('en') },
+        es: { text: () => getCampText('es'), choices: () => getCampChoices('es') },
+        de: { text: () => getCampText('de'), choices: () => getCampChoices('de') },
+        fr: { text: () => getCampText('fr'), choices: () => getCampChoices('fr') },
+        ga: { text: () => getCampText('ga'), choices: () => getCampChoices('ga') }
       },
-      kill_skeleton: {
-        ru: { text: "Вы сокрушили кости врага мощным ударом! Из его останков выпал древний изумруд.", choices: [{ text: "💎 Забрать изумруд (+100 золота)", next: "win_scene" }] },
-        en: { text: "You crushed the enemy's bones with a powerful blow! A pristine ancient emerald fell from its remains.", choices: [{ text: "💎 Take emerald (+100 Gold)", next: "win_scene" }] },
-        es: { text: "¡Destrozaste los huesos del enemigo сon un golpe poderoso! Una antigua esmeralda cayó de sus restos.", choices: [{ text: "💎 Tomar la esmeralda (+100 Oro)", next: "win_scene" }] },
-        de: { text: "Du hast die Knochen des Feindes mit einem gewaltigen Schlag zertrümmert! Ein uralter Smaragd fiel aus seinen Überresten.", choices: [{ text: "💎 Smaragd nehmen (+100 Gold)", next: "win_scene" }] },
-        fr: { text: "Vous avez brisé les os de l'ennemi d'un coup puissant ! Émeraude antique est tombée de ses restes.", choices: [{ text: "💎 Prendre l'émeraude (+100 Or)", next: "win_scene" }] },
-        ga: { text: "Phrúigh tú cnámha an namhad le buille cumhachtach! Thit emerald ársa as a iarsmaí.", choices: [{ text: "💎 Tóg emerald (+100 Ór)", next: "win_scene" }] }
-      },
-      run_past: {
-        ru: { text: "Вы рванули вперед, бросив факел ему в лицо. Скелет растерялся, и вы проскочили в сокровищницу склепа!", choices: [{ text: "👑 Обыскать сундуки", next: "win_scene" }] },
-        en: { text: "You dashed forward, throwing the torch right into its face. The skeleton stumbled, and you slipped into the treasury!", choices: [{ text: "👑 Search chests", next: "win_scene" }] },
-        es: { text: "Te lanzaste hacia adelante, arrojando la antorcha a su cara. ¡El esqueleto tropezó y te colaste en la tesorería!", choices: [{ text: "👑 Registrar cofres", next: "win_scene" }] },
-        de: { text: "Du bist nach vorne gestürmt und hast ihm die Fackel ins Gesicht geworfen. Das Skelett stolperte und du bist in die Schatzkammer geschlüpft!", choices: [{ text: "👑 Truhen durchsuchen", next: "win_scene" }] },
-        fr: { text: "Vous vous êtes élancé vers l'avant, lui jetant la torche au visage. Le squelette a trébuché et vous vous êtes glissé dans la salle au trésor !", choices: [{ text: "👑 Fouiller les coffres", next: "win_scene" }] },
-        ga: { text: "Phléasc tú ar aghaidh, ag caitheamh an lóicéid isteach ina aghaidh. Chraith an cnámharlach, agus d'éalaigh tú isteach sa taisce!", choices: [{ text: "👑 Cuardaigh cistí", next: "win_scene" }] }
-      },
-      loot_camp: {
-        ru: { text: "Кошель ваш. Вы перевязываете раны и снова смотрите на темнеющий зловещий вход в склеп.", choices: [{ text: "🚪 Идти к склепу", next: "start" }] },
-        en: { text: "The pouch is yours. You bandage your cuts and look once more at the darkening, ominous entrance to the crypt.", choices: [{ text: "🚪 Go to the crypt", next: "start" }] },
-        es: { text: "La bolsa es tuya. Vendas tus heridas y miras una vez más la oscura y ominosa entrada de la cripta.", choices: [{ text: "🚪 Ir a la cripta", next: "start" }] },
-        de: { text: "Der Beutel gehört dir. Du verbindest deine Wunden und blickst noch einmal auf den dunkler werdenden, unheilvollen Eingang zur Krypta.", choices: [{ text: "🚪 Zur Krypta gehen", next: "start" }] },
-        fr: { text: "La bourse est à vous. Vous pansez vos coupures et regardez une fois de plus l'entrée sombre et menaçante de la crypte.", choices: [{ text: "🚪 Aller à la crypte", next: "start" }] },
-        ga: { text: "Is leat an spaga. Bandáitíonn tú do chuid gearrthacha agus féachann tú arís ar an mbealach isteach dorcha don uaimh.", choices: [{ text: "🚪 Téigh go dtí an uaimh", next: "start" }] }
+      crypt_inside: {
+        ru: { text: () => getBattleText('ru'), choices: () => getBattleChoices('ru') },
+        en: { text: () => getBattleText('en'), choices: () => getBattleChoices('en') },
+        es: { text: () => getBattleText('es'), choices: () => getBattleChoices('es') },
+        de: { text: () => getBattleText('de'), choices: () => getBattleChoices('de') },
+        fr: { text: () => getBattleText('fr'), choices: () => getBattleChoices('fr') },
+        ga: { text: () => getBattleText('ga'), choices: () => getBattleChoices('ga') }
       },
       win_scene: {
-        ru: { text: "Отличная добыча! Вы успешно завершили первый этап подземелья. Проклятие склепа отступает.", choices: [{ text: "🔄 Начать заново", next: "reset" }] },
-        en: { text: "Great loot! You have successfully cleared the first stage of the dungeon. The crypt's curse fades.", choices: [{ text: "🔄 Restart adventure", next: "reset" }] },
-        es: { text: "¡Buen botín! Has completado con éxito la primera etapa de la mazmorra. La maldición de la cripta se desvanece.", choices: [{ text: "🔄 Reiniciar aventura", next: "reset" }] },
-        de: { text: "Tolle Beute! Du hast die erste Stufe des Dungeons erfolgreich abgeschlossen. Der Fluch der Krypta verblasst.", choices: [{ text: "🔄 Abenteuer neu starten", next: "reset" }] },
-        fr: { text: "Super butin ! Vous avez réussi à vider la première étape du donjon. La malédiction de la crypte s'estompe.", choices: [{ text: "🔄 Recommencer l'aventure", next: "reset" }] },
-        ga: { text: "Loot iontach! D'éirigh leat an chéad chéim den dún a ghlanadh. Mathaíonn mallacht na huaimhe.", choices: [{ text: "🔄 Atosaigh eachtra", next: "reset" }] }
+        ru: { text: "Враг разбит! В глубине зала вы обнаружили кованый сундук. Открыть его?", choices: [{ text: "👑 Открыть сундук", next: "open_chest" }] },
+        en: { text: "Enemy defeated! In the depths of the hall, you find an iron chest. Open it?", choices: [{ text: "👑 Open chest", next: "open_chest" }] },
+        es: { text: "¡Enemigo derrotado! Encuentras un cofre de hierro en las profundidades. ¿Abrirlo?", choices: [{ text: "👑 Abrir cofre", next: "open_chest" }] },
+        de: { text: "Gegner besiegt! Du findest eine Eisentruhe. Öffnen?", choices: [{ text: "👑 Truhe öffnen", next: "open_chest" }] },
+        fr: { text: "Ennemi vaincu ! Vous trouvez un coffre en fer. L'ouvrir ?", choices: [{ text: "👑 Ouvrir le coffre", next: "open_chest" }] },
+        ga: { text: "Namhaid cloíte! Aimsíonn tú ciste iarainn. Oscail é?", choices: [{ text: "👑 Oscail an ciste", next: "open_chest" }] }
+      },
+      end_adventure: {
+        ru: { text: () => getChestText('ru'), choices: [{ text: "🔄 Начать заново", next: "reset" }] },
+        en: { text: () => getChestText('en'), choices: [{ text: "🔄 Restart", next: "reset" }] },
+        es: { text: () => getChestText('es'), choices: [{ text: "🔄 Reiniciar", next: "reset" }] },
+        de: { text: () => getChestText('de'), choices: [{ text: "🔄 Neu starten", next: "reset" }] },
+        fr: { text: () => getChestText('fr'), choices: [{ text: "🔄 Recommencer", next: "reset" }] },
+        ga: { text: () => getChestText('ga'), choices: [{ text: "🔄 Atosaigh", next: "reset" }] }
       }
     };
 
-    function updateUI() {
-      document.getElementById('label-hp').innerText = uiTranslations[currentLang].hp;
-      document.getElementById('label-energy').innerText = uiTranslations[currentLang].energy;
-      document.getElementById('label-gold').innerText = uiTranslations[currentLang].gold;
-      document.getElementById('donate-btn-text').innerText = uiTranslations[currentLang].donate;
-      document.getElementById('theme-btn-text').innerText = uiTranslations[currentLang].theme;
+    function getStartChoices(lng) {
+      const enterText = { ru: "🚪 Войти внутрь (-1 факел)", en: "🚪 Enter inside (-1 torch)", es: "🚪 Entrar (-1 antorcha)", de: "🚪 Eintreten (-1 Fackel)", fr: "🚪 Entrer à l'intérieur (-1 torche)", ga: "🚪 Téigh isteach (-1 lóicéad)" }[lng];
+      
+      let campText = { ru: "🔍 Обыскать лагерь рядом", en: "🔍 Search nearby camp", es: "🔍 Registrar el campamento", de: "🔍 Lager untersuchen", fr: "🔍 Fouiller le camp", ga: "🔍 Cuardaigh campa" }[lng];
+      if (state.campRollResult !== null) {
+        campText = { ru: "🔍 Осмотреть пустой лагерь", en: "🔍 Check empty camp", es: "🔍 Mirar campamento vacío", de: "🔍 Leeres Lager ansehen", fr: "🔍 Regarder le camp vide", ga: "🔍 Féach ar an gcampa folamh" }[lng];
+      }
 
-      document.getElementById('hp-val').innerText = player.hp + "/100";
-      document.getElementById('energy-val').innerText = player.energy + "/20";
-      document.getElementById('gold-val').innerText = player.gold;
+      return [
+        { text: enterText, next: "crypt_inside" },
+        { text: campText, next: "search_camp" }
+      ];
+    }
+
+    function getCampText(lng) {
+      if (state.campRollResult === null) {
+        return { ru: "Вы аккуратно крадетесь по заброшенному лагерю...", en: "You carefully creep around the abandoned camp...", es: "Te deslizas por el campamento abandonado...", de: "Du schleichst durch das verlassene Lager...", fr: "Vous vous glissez dans le camp abandonné...", ga: "Sleamhnaíonn tú timpeall an champa tréigthe..." }[lng];
+      }
+      return state.battleLog;
+    }
+
+    function getCampChoices(lng) {
+      if (state.campRollResult === null) {
+        return [{ text: { ru: "🎲 Испытать удачу", en: "🎲 Try luck", es: "🎲 Probar suerte", de: "🎲 Glück versuchen", fr: "🎲 Tenter votre chance", ga: "🎲 Bain triail as" }[lng], next: "roll_camp" }];
+      }
+      return [{ text: { ru: "🚪 Вернуться к склепу", en: "🚪 Go back to crypt", es: "🚪 Volver a la cripta", de: "🚪 Zurück zur Krypta", fr: "🚪 Retourner à la crypte", ga: "🚪 Téigh ar ais go dtí uaimh" }[lng], next: "start" }];
+    }
+
+    function getBattleText(lng) {
+      if (!state.battleLog) {
+        return { ru: "Внутри склепа мрак. Из темноты материализуется Скелет-Страж! Начинается бой!", en: "It is pitch black inside. Out of the darkness, a Skeleton Guard appears!", es: "La oscuridad es total. ¡Un Esqueleto Guardián aparece!", de: "Drinnen ist es stockdunkel. Ein Skelettwächter erscheint!", fr: "Il fait un noir d'encre. Un Squelette Garde surgit !", ga: "Tá sé dubh thais thall. Sclábhaí Cnámharlaigh le feiceáil!" }[lng];
+      }
+      return state.battleLog;
+    }
+
+    function getBattleChoices(lng) {
+      return [
+        { text: { ru: "⚔️ Нанести мощный удар", en: "⚔️ Strike with weapon", es: "⚔️ Atacar con fuerza", de: "⚔️ Angreifen", fr: "⚔️ Frapper", ga: "⚔️ Buail leis an arm" }[lng], next: "battle_turn" },
+        { text: { ru: "🛡️ Закрыться щитом", en: "🛡️ Defend yourself", es: "🛡️ Defenderse", de: "🛡️ Blocken", fr: "🛡️ Se défendre", ga: "🛡️ Cosain tú féin" }[lng], next: "battle_block" }
+      ];
+    }
+
+    function getChestText(lng) {
+      if (state.chestOpened) {
+        return { ru: "Используя ключ, вы открыли потайной замок! Внутри лежало массивное сокровище (+200 💰)!", en: "Using the key, you unlocked the chest! Huge treasure found (+200 💰)!", es: "¡Usando la clave, abriste el cofre! Gran tesoro encontrado (+200 💰)!", de: "Mit dem Schlüssel hast du die Truhe geöffnet! Riesiger Schatz gefunden (+200 💰)!", fr: "En utilisant la clé, vous avez ouvert le coffre ! Immense trésor trouvé (+200 💰)!", ga: "Ag baint úsáide as an eochair, d'oscail tú an ciste! Taisce ollmhór aimsithe (+200 💰)!" }[lng];
+      }
+      return { ru: "Ключа не было, пришлось сбивать замок камнем. Вы достали немного золота (+50 💰).", en: "No key found. You smashed the lock and got some gold (+50 💰).", es: "No se encontró clave. Rompiste el cerроjo y obtuviste algo de oro (+50 💰).", de: "Kein Schlüssel. Du hast das Schloss eingeschlagen (+50 💰).", fr: "Aucune clé. Vous avez brisé le cadenas (+50 💰).", ga: "Níor aimsíodh aon eochair. Bhris tú an glas (+50 💰)." }[lng];
+    }
+
+    let saveTimeout = null;
+    function updateUI() {
+      const lng = state.currentLang;
+      document.getElementById('label-hp').innerText = ui[lng].hp;
+      document.getElementById('label-energy').innerText = ui[lng].energy;
+      document.getElementById('label-gold').innerText = ui[lng].gold;
+      document.getElementById('donate-btn-text').innerText = ui[lng].donate;
+      document.getElementById('theme-btn-text').innerText = ui[lng].theme;
+      document.getElementById('enemy-name-label').innerText = ui[lng].enemyName;
+
+      document.getElementById('hp-val').innerText = state.player.hp + "/100";
+      document.getElementById('energy-val').innerText = state.player.energy + "/20";
+      document.getElementById('gold-val').innerText = state.player.gold;
+
+      const invDisplay = document.getElementById('inventory-display');
+      if (state.player.inventory.length === 0) {
+        invDisplay.innerText = ui[lng].emptyInv;
+      } else {
+        const translatedItems = state.player.inventory.map(item => ui[lng][item] || item);
+        invDisplay.innerText = ui[lng].invTitle + translatedItems.join(', ');
+      }
+
+      const enemyBox = document.getElementById('enemy-hp-box');
+      if (state.enemy.active) {
+        enemyBox.style.display = 'block';
+        document.getElementById('enemy-hp-val').innerText = state.enemy.hp;
+      } else {
+        enemyBox.style.display = 'none';
+      }
+      
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        saveToCloud();
+      }, 1000);
+    }
+
+    function saveToCloud() {
+      if (typeof tg.CloudStorage !== 'undefined' && tg.CloudStorage.setItem) {
+        try {
+          tg.CloudStorage.setItem('grim_crypt_state', JSON.stringify(state), (err, success) => {
+            if (err) console.error("CloudStorage save error", err);
+          });
+        } catch (e) { console.error("CloudStorage execution error", e); }
+      } else {
+        localStorage.setItem('grim_crypt_state', JSON.stringify(state));
+      }
     }
 
     function renderScene() {
-      const scene = storyData[currentScene][currentLang];
-      document.getElementById('story-display').innerText = scene.text;
-      
+      const lng = state.currentLang;
+      if (state.player.hp <= 0) {
+        document.getElementById('story-display').innerText = ui[lng].gameOver;
+        const choicesDiv = document.getElementById('choices-display');
+        choicesDiv.innerHTML = '';
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.innerText = ui[lng].restartBtn;
+        btn.onclick = () => handleChoice('reset');
+        choicesDiv.appendChild(btn);
+        state.enemy.active = false;
+        updateUI();
+        return;
+      }
+
+      const scene = storyData[state.currentScene][lng];
+      const textVal = typeof scene.text === 'function' ? scene.text(lng) : scene.text;
+      const choicesVal = typeof scene.choices === 'function' ? scene.choices(lng) : scene.choices;
+
+      document.getElementById('story-display').innerText = textVal;
       const choicesDiv = document.getElementById('choices-display');
       choicesDiv.innerHTML = '';
       
-      scene.choices.forEach(choice => {
+      choicesVal.forEach(choice => {
         const btn = document.createElement('button');
         btn.className = 'choice-btn';
         btn.innerText = choice.text;
-        btn.onclick = () => handleChoice(choice);
+        btn.onclick = () => handleChoice(choice.next);
         choicesDiv.appendChild(btn);
       });
       updateUI();
     }
 
-    function handleChoice(choice) {
-      if (choice.cost && player.energy <= 0) {
-        alert(uiTranslations[currentLang].noEnergy);
-        return;
+    function handleChoice(nextScene) {
+      const lng = state.currentLang;
+
+      if (state.currentScene === 'start' && nextScene === 'search_camp' && state.campRollResult !== null) {
+        state.battleLog = { 
+          ru: "Здесь больше ничего нет. Вы уже обчистили этот лагерь.", 
+          en: "There's nothing left here. You have already looted this camp.",
+          es: "No queda nada aquí. Ya has saqueado este campamento.",
+          de: "Hier ist nichts mehr übrig. Du hast dieses Lager geplündert.",
+          fr: "Il ne reste plus rien ici. Vous avez déjà pillé ce camp.",
+          ga: "Níl aon rud fágtha anseo. Rinne tú creach ar an gcampa seo cheana."
+        }[lng];
       }
 
-      if (currentScene === 'start' && choice.next === 'crypt_inside') player.energy -= 1;
-      if (currentScene === 'crypt_inside' && choice.next === 'kill_skeleton') player.hp -= 20;
-      if (currentScene === 'crypt_inside' && choice.next === 'run_past') player.energy -= 1;
-      if (currentScene === 'start' && choice.next === 'search_camp') { player.gold += 25; player.hp -= 15; }
-      if (currentScene === 'kill_skeleton') player.gold += 100;
+      if (state.currentScene === 'start' && nextScene === 'crypt_inside') {
+        if (state.player.energy <= 0) { alert(ui[lng].noEnergy); return; }
+        state.player.energy -= 1;
+        state.enemy.hp = state.enemy.maxHp;
+        state.enemy.active = true;
+        state.battleLog = '';
+      }
 
-      if (choice.next === 'reset') {
-        player = { hp: 100, energy: 20, gold: 0 };
-        currentScene = 'start';
+      if (nextScene === 'roll_camp' && state.campRollResult === null) {
+        const roll = Math.random();
+        state.campRollResult = roll;
+        if (roll < 0.4) {
+          state.player.gold += 30;
+          state.player.inventory.push("pouchItem");
+          state.battleLog = { ru: "Удача! Под старым настилом вы откопали старый кошель с золотом (+30 💰).", en: "Luck! Under the old floorboards you dug up an old pouch of gold (+30 💰).", es: "¡Suerte! Cavaste una vieja bolsa de oro (+30 💰).", de: "Glück! Du hast einen alten Beutel Gold ausgegraben (+30 💰).", fr: "Chance ! Vous avez déterré une vieille bourse d'or (+30 💰).", ga: "Rath! Thochail tú seanspaga óir (+30 💰)." }[lng];
+        } else if (roll < 0.7) {
+          state.player.hp = Math.max(0, state.player.hp - 20);
+          state.battleLog = { ru: "Ловушка! Вы наступили на ржавый капкан (-20 HP).", en: "Trap! You stepped on a rusty bear trap (-20 HP).", es: "¡Trampa! Pisaste una trampa oxidada (-20 HP).", de: "Falle! Du bist in eine rostige Bärenfalle getreten (-20 HP).", fr: "Piège ! Vous avez marché sur un piège rouillé (-20 HP).", ga: "Gaiste! Shéid tú ar ghaiste meirgeach (-20 HP)." }[lng];
+        } else {
+          state.player.inventory.push("keyItem");
+          state.battleLog = { ru: "Вы нашли древний Ключ от Сокровищницы, покрытый светящимися рунами!", en: "You found an ancient Treasury Key covered in glowing runes!", es: "¡Encontraste una antigua clave del tesoro cubierta de runas!", de: "Du hast einen alten Tresorschlüssel gefunden, der mit Runen bedeckt ist!", fr: "Vous avez trouvé une clé du trésor antique couverte de runes !", ga: "Aimsigh tú eochair thaisce ársa clúdaithe le rúnanna!" }[lng];
+        }
+        nextScene = 'search_camp';
+      }
+
+      if (nextScene === 'battle_turn') {
+        const dmgToEnemy = Math.floor(Math.random() * 11) + 18; // 18-28 урона (ср. ~23)
+        const dmgToPlayer = Math.floor(Math.random() * 7) + 6;   // 6-12 урона (ср. ~9)
+        state.enemy.hp = Math.max(0, state.enemy.hp - dmgToEnemy);
+        state.player.hp = Math.max(0, state.player.hp - dmgToPlayer);
+
+        if (state.enemy.hp <= 0) {
+          state.enemy.active = false;
+          nextScene = 'win_scene';
+        } else {
+          state.battleLog = {
+            ru: `⚔️ Вы нанесли мощный удар на ${dmgToEnemy} урона! Скелет контратаковал и ранил вас на ${dmgToPlayer} HP.`,
+            en: `⚔️ You struck for ${dmgToEnemy} damage! The skeleton countered and hit you for ${dmgToPlayer} HP.`,
+            es: `⚔️ ¡Atacaste por ${dmgToEnemy} de daño! El esqueleto contraatacó por ${dmgToPlayer} HP.`,
+            de: `⚔️ Du hast ${dmgToEnemy} Schaden verursacht! Das Skelett konterte für ${dmgToPlayer} HP.`,
+            fr: `⚔️ Vous avez infligé ${dmgToEnemy} dégâts ! Le squelette a riposté pour ${dmgToPlayer} HP.`,
+            ga: `⚔️ Bhuail tú le haghaidh ${dmgToEnemy} damáiste! Ghabh an cnámharlach ar ais le haghaidh ${dmgToPlayer} HP.`
+          }[lng];
+          nextScene = 'crypt_inside';
+        }
+      }
+
+      if (nextScene === 'battle_block') {
+        const dmgToEnemy = Math.floor(Math.random() * 4) + 2;  // 2-5 урона (ср. ~3.5)
+        const dmgToPlayer = Math.floor(Math.random() * 3);     // 0-2 урона (ср. ~1)
+        state.enemy.hp = Math.max(0, state.enemy.hp - dmgToEnemy);
+        state.player.hp = Math.max(0, state.player.hp - dmgToPlayer);
+
+        if (state.enemy.hp <= 0) {
+          state.enemy.active = false;
+          nextScene = 'win_scene';
+        } else {
+          state.battleLog = {
+            ru: `🛡️ Блок! Вы потеряли всего ${dmgToPlayer} HP и провели ответный выпад щитом на ${dmgToEnemy} урона.`,
+            en: `🛡️ Block! You lost only ${dmgToPlayer} HP and bashed back with your shield for ${dmgToEnemy} damage.`,
+            es: `🛡️ ¡Bloqueo! Perdiste solo ${dmgToPlayer} HP y golpeaste con el escudo por ${dmgToEnemy} de daño.`,
+            de: `🛡️ Block! Du hast nur ${dmgToPlayer} HP verloren und mit dem Schild ${dmgToEnemy} Schaden ausgeteilt.`,
+            fr: `🛡️ Bloc ! Vous n'avez perdu que ${dmgToPlayer} HP et avez frappé en retour pour ${dmgToEnemy} dégâts.`,
+            ga: `🛡️ Cosaint! Níor chaill tú ach ${dmgToPlayer} HP agus bhuail tú ar ais le do sciath le haghaidh ${dmgToEnemy} damáiste.`
+          }[lng];
+          nextScene = 'crypt_inside';
+        }
+      }
+
+      if (nextScene === 'open_chest') {
+        if (state.player.inventory.includes("keyItem")) {
+          state.player.gold += 200;
+          state.chestOpened = true;
+        } else {
+          state.player.gold += 50;
+          state.chestOpened = false;
+        }
+        nextScene = 'end_adventure';
+      }
+
+      if (nextScene === 'reset') {
+        state.player = { hp: 100, energy: 20, gold: 0, inventory: [] };
+        state.enemy = { hp: 0, maxHp: 50, active: false };
+        state.campRollResult = null;
+        state.battleLog = '';
+        state.chestOpened = false;
+        state.currentScene = 'start';
       } else {
-        currentScene = choice.next;
+        state.currentScene = nextScene;
       }
 
       renderScene();
     }
 
     function changeLanguage(lang) {
-      currentLang = lang;
+      state.currentLang = lang;
       renderScene();
     }
 
     function toggleTheme() {
-      currentThemeIndex = (currentThemeIndex + 1) % themes.length;
-      document.documentElement.setAttribute('data-theme', themes[currentThemeIndex]);
+      state.currentThemeIndex = (state.currentThemeIndex + 1) % themes.length;
+      document.documentElement.setAttribute('data-theme', themes[state.currentThemeIndex]);
+      updateUI();
     }
 
     function buyEnergy() {
-      const titles = { ru: 'Покупка факелов', en: 'Buy Torches', es: 'Comprar antorchas', de: 'Fackeln kaufen', fr: 'Acheter des torches', ga: 'Ceannaigh Lóicéid' };
-      const messages = { 
-        ru: 'Здесь будет выставляться официальный счёт на Telegram Stars.', 
-        en: 'This will open an official Telegram Stars invoice.',
-        es: 'Esto abrirá una factura oficial de Telegram Stars.',
-        de: 'Dies öffnet eine offizielle Telegram Stars-Rechnung.',
-        fr: 'Cela ouvrira une facture officielle Telegram Stars.',
-        ga: 'Osclóidh sé seo sonrasc oifigiúil Telegram Stars.'
-      };
-      
       tg.showPopup({
-        title: titles[currentLang] || titles['en'],
-        message: messages[currentLang] || messages['en'],
-        buttons: [{type: 'ok', text: 'OK'}]
+        title: state.currentLang === 'ru' ? 'Тест транзакции Stars' : 'Stars Payment Simulation',
+        message: state.currentLang === 'ru' ? 'Запустить тестовое начисление 5 факелов?' : 'Trigger a test addition of 5 torches?',
+        buttons: [{type: 'ok', text: 'Зачислить'}, {type: 'cancel'}]
+      }, (buttonId) => {
+        if (buttonId === 'ok') {
+          state.player.energy += 5;
+          updateUI();
+          tg.showAlert(ui[state.currentLang].successBuy);
+        }
       });
     }
 
-    renderScene();
+    function initGame() {
+      if (typeof tg.CloudStorage !== 'undefined' && tg.CloudStorage.getItem) {
+        try {
+          tg.CloudStorage.getItem('grim_crypt_state', (err, savedData) => {
+            if (!err && savedData) {
+              parseAndApplyState(savedData);
+            } else {
+              renderScene();
+            }
+          });
+        } catch (e) { 
+          console.error("CloudStorage interface error, trying localStorage", e);
+          loadFromLocalStorage();
+        }
+      } else {
+        loadFromLocalStorage();
+      }
+    }
+
+    function loadFromLocalStorage() {
+      const localData = localStorage.getItem('grim_crypt_state');
+      if (localData) {
+        parseAndApplyState(localData);
+      } else {
+        renderScene();
+      }
+    }
+
+    function parseAndApplyState(rawData) {
+      try {
+        const loadedState = JSON.parse(rawData);
+        if (loadedState && loadedState.version === CURRENT_VERSION) {
+          state = loadedState;
+          document.getElementById('lang-select').value = state.currentLang;
+          document.documentElement.setAttribute('data-theme', themes[state.currentThemeIndex]);
+        } else {
+          console.log("Old or invalid state version. Fresh game started.");
+        }
+      } catch(e) { console.error("Error parsing saved state", e); }
+      renderScene();
+    }
+
+    initGame();
   </script>
 </body>
 </html>
